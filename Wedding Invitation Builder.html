@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wedding Invitation Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f3ee;--ui:#fff;--tx:#2b2622;--mu:#7a716a;--bd:#ddd5cb;--ac:#8a5a44}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171412;--ui:#221e1b;--tx:#efe8e0;--mu:#a1978d;--bd:#3a3430;--ac:#d09a7e}}
+:root[data-theme="dark"]{--bg:#171412;--ui:#221e1b;--tx:#efe8e0;--mu:#a1978d;--bd:#3a3430;--ac:#d09a7e}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 Inter,system-ui,sans-serif}
+.tabs{display:flex;gap:8px;padding:12px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:5}
+.tabs button{flex:1;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--ui);color:var(--tx);font:inherit;font-weight:500}
+.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.pane{display:none;padding:0 12px 24px;max-width:560px;margin:0 auto}
+.pane.on{display:block}
+label{display:block;font-size:12px;color:var(--mu);margin:12px 0 4px}
+input,textarea,select{width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;background:var(--ui);color:var(--tx);font:inherit}
+textarea{min-height:72px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.themes{display:flex;gap:10px;margin-top:4px}
+.sw{width:44px;height:44px;border-radius:50%;border:3px solid transparent;cursor:pointer}
+.sw.on{border-color:var(--ac)}
+.card{border-radius:18px;padding:40px 24px;text-align:center;background:var(--c-bg);color:var(--c-tx);border:1px solid var(--c-ac);font-family:'Cormorant Garamond',Georgia,serif}
+.card small{display:block;letter-spacing:.25em;text-transform:uppercase;font-size:12px;color:var(--c-ac);font-family:Inter,sans-serif}
+.card h1{font-size:46px;line-height:1.05;font-weight:600;margin:18px 0 6px}
+.card .amp{color:var(--c-ac);font-style:italic;font-weight:400;display:block;font-size:30px}
+.card p{font-size:19px;margin:10px 0}
+.line{width:60px;height:1px;background:var(--c-ac);margin:22px auto}
+.count{display:flex;justify-content:center;gap:16px;margin:8px 0}
+.count div{min-width:52px}
+.count b{display:block;font-size:30px;font-weight:600}
+.count span{font:11px Inter,sans-serif;letter-spacing:.15em;text-transform:uppercase;color:var(--c-ac)}
+.sched{font-size:17px}
+.btn{display:inline-block;margin-top:14px;padding:12px 28px;background:var(--c-ac);color:var(--c-bg);border-radius:30px;text-decoration:none;font:500 14px Inter,sans-serif;letter-spacing:.08em}
+.hint{font-size:12px;color:var(--mu);text-align:center;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="tabs">
+  <button id="t1" class="on" onclick="tab(1)">Edit</button>
+  <button id="t2" onclick="tab(2)">Preview</button>
+</div>
+
+<div class="pane on" id="p1">
+  <div class="row">
+    <div><label>Partner 1</label><input id="n1" value="Emma"></div>
+    <div><label>Partner 2</label><input id="n2" value="James"></div>
+  </div>
+  <div class="row">
+    <div><label>Date</label><input id="date" type="date"></div>
+    <div><label>Ceremony time</label><input id="time" type="time" value="16:00"></div>
+  </div>
+  <label>Venue</label><input id="venue" value="The Willow Estate">
+  <label>Address</label><input id="addr" value="123 Garden Lane, Napa, CA">
+  <label>Message</label><textarea id="msg">Together with our families, we joyfully invite you to celebrate our wedding.</textarea>
+  <label>Schedule (one per line: time - event)</label>
+  <textarea id="sched">4:00 PM - Ceremony
+5:00 PM - Cocktail hour
+6:30 PM - Dinner &amp; dancing</textarea>
+  <label>RSVP email</label><input id="email" type="email" placeholder="you@example.com">
+  <label>RSVP deadline</label><input id="rsvp" value="">
+  <label>Style</label>
+  <div class="themes" id="themes"></div>
+  <p class="hint">Tap Preview to see your invitation.</p>
+</div>
+
+<div class="pane" id="p2">
+  <div class="card" id="card"></div>
+  <p class="hint">Guests RSVP by email. To share, use the Share button on this page's link.</p>
+</div>
+
+<script>
+var THEMES=[
+ {n:'Blush',bg:'#fbf1ee',tx:'#4a2f2f',ac:'#b86b6b'},
+ {n:'Sage',bg:'#f1f4ec',tx:'#2f3a2c',ac:'#6f8a5e'},
+ {n:'Midnight',bg:'#1c2233',tx:'#f1ece0',ac:'#d9b66b'}
+];
+var theme=0;
+var $=function(i){return document.getElementById(i)};
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function tab(n){
+  [1,2].forEach(function(i){$('p'+i).classList.toggle('on',i==n);$('t'+i).classList.toggle('on',i==n)});
+  if(n==2)render();
+  window.scrollTo(0,0);
+}
+function drawThemes(){
+  $('themes').innerHTML=THEMES.map(function(t,i){
+    return '<div class="sw'+(i==theme?' on':'')+'" title="'+t.n+'" style="background:'+t.bg+';box-shadow:inset 0 0 0 10px '+t.ac+'" onclick="theme='+i+';drawThemes()"></div>';
+  }).join('');
+}
+var d=new Date();d.setMonth(d.getMonth()+6);
+$('date').value=d.toISOString().slice(0,10);
+$('rsvp').value='one month before';
+drawThemes();
+function fmtTime(t){if(!t)return'';var p=t.split(':'),h=+p[0];return(h%12||12)+':'+p[1]+' '+(h<12?'AM':'PM')}
+function render(){
+  var t=THEMES[theme],c=$('card');
+  c.style.setProperty('--c-bg',t.bg);c.style.setProperty('--c-tx',t.tx);c.style.setProperty('--c-ac',t.ac);
+  var dt=$('date').value?new Date($('date').value+'T'+($('time').value||'12:00')):null;
+  var ds=dt?dt.toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'}):'';
+  var diff=dt?Math.max(0,dt-new Date()):0;
+  var days=Math.floor(diff/864e5),hrs=Math.floor(diff%864e5/36e5),min=Math.floor(diff%36e5/6e4);
+  var sched=$('sched').value.split('\n').filter(Boolean).map(function(l){return'<div>'+esc(l)+'</div>'}).join('');
+  var n1=esc($('n1').value),n2=esc($('n2').value);
+  var mail=$('email').value;
+  var href=mail?'mailto:'+encodeURIComponent(mail)+'?subject='+encodeURIComponent('RSVP: '+$('n1').value+' & '+$('n2').value)+'&body='+encodeURIComponent('Name(s):\nAttending: Yes / No\nNumber of guests:\nDietary needs:'):'#';
+  c.innerHTML='<small>You are invited</small><h1>'+n1+'<span class="amp">&amp;</span>'+n2+'</h1>'
+   +'<div class="line"></div><p>'+esc($('msg').value)+'</p><div class="line"></div>'
+   +'<p><b>'+esc(ds)+'</b><br>'+esc(fmtTime($('time').value))+'</p>'
+   +'<p>'+esc($('venue').value)+'<br><span style="font-size:16px;opacity:.8">'+esc($('addr').value)+'</span></p>'
+   +(dt?'<div class="count"><div><b>'+days+'</b><span>Days</span></div><div><b>'+hrs+'</b><span>Hours</span></div><div><b>'+min+'</b><span>Min</span></div></div>':'')
+   +'<div class="line"></div><div class="sched">'+sched+'</div><div class="line"></div>'
+   +'<p style="font-size:16px">Kindly reply by '+esc($('rsvp').value)+'</p>'
+   +'<a class="btn" href="'+href+'">RSVP</a>'
+   +(mail?'':'<div class="hint" style="color:var(--c-tx);opacity:.6">Add an RSVP email in Edit to activate this button.</div>');
+}
+</script>
+</body>
+</html>
